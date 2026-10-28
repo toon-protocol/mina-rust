@@ -27,6 +27,7 @@ pub mod verifiers;
 pub mod witness;
 pub mod wrap;
 pub mod zkapp;
+pub mod toon1561;
 
 pub const BACKEND_TICK_ROUNDS_N: usize = 16;
 pub const BACKEND_TOCK_ROUNDS_N: usize = 15;

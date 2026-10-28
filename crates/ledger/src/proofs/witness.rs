@@ -33,6 +33,16 @@ impl<F: FieldWitness> Witness<F> {
         }
     }
 
+    /// PROTOTYPE #1561: build a witness from values another implementation produced.
+    pub fn from_parts(primary: Vec<F>, aux: Vec<F>) -> Self {
+        Self { primary, aux, ocaml_aux: Vec::new(), ocaml_aux_index: 0 }
+    }
+
+    /// PROTOTYPE #1561
+    pub fn aux_len(&self) -> usize {
+        self.aux.len()
+    }
+
     pub(super) fn aux(&self) -> &[F] {
         &self.aux
     }

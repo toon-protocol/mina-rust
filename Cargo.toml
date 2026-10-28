@@ -30,6 +30,7 @@ members = [
   "tools/hash-tool",
   "tools/ledger-tool",
   "tools/testing",
+  "tools/toon-1561",
   "tools/toon-1512",
   "tools/transport",
   "tools/webrtc-sniffer",

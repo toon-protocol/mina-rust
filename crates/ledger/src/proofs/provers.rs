@@ -35,7 +35,7 @@ pub fn devnet_circuit_directory() -> &'static str {
 //     mina_core::NetworkConfig::global().circuits_config.directory_name
 // }
 
-fn decode_gates_file<F: FieldWitness>(
+pub fn decode_gates_file<F: FieldWitness>(
     reader: impl std::io::Read,
 ) -> std::io::Result<Vec<CircuitGate<F>>> {
     #[serde_with::serde_as]
@@ -49,7 +49,7 @@ fn decode_gates_file<F: FieldWitness>(
     Ok(data.gates)
 }
 
-fn read_gates_file<F: FieldWitness>(
+pub fn read_gates_file<F: FieldWitness>(
     filename: &impl AsRef<Path>,
 ) -> std::io::Result<Vec<CircuitGate<F>>> {
     let bytes = circuit_blobs::fetch_blocking(filename)?;
@@ -267,7 +267,7 @@ impl BlockProver {
     }
 }
 
-fn decode_constraints_data<F: FieldWitness>(
+pub fn decode_constraints_data<F: FieldWitness>(
     mut internal_vars: &[u8],
     mut rows_rev: &[u8],
 ) -> Option<(InternalVars<F>, Vec<Vec<Option<V>>>)> {
