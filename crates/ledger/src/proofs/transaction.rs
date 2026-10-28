@@ -3973,7 +3973,7 @@ pub(super) fn create_proof<C: ProofConstants, F: FieldWitness>(
     params: CreateProofParams<F>,
     w: &Witness<F>,
 ) -> anyhow::Result<ProofWithPublic<F>> {
-    type EFrSponge<F> = mina_poseidon::sponge::DefaultFrSponge<F, PlonkSpongeConstantsKimchi>;
+    type EFrSponge<F> = mina_poseidon::sponge::DefaultFrSponge<F, PlonkSpongeConstantsKimchi, { crate::proofs::FULL_ROUNDS }>;
 
     let CreateProofParams {
         prover,

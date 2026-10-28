@@ -1365,7 +1365,7 @@ pub mod step_verifier {
         sponge: Sponge<Fp>,
         xi: [u64; 2],
         advice: &'a Advice<Fp>,
-        openings_proof: &'a OpeningProof<GroupAffine<Fp>>,
+        openings_proof: &'a OpeningProof<GroupAffine<Fp>, { crate::proofs::FULL_ROUNDS }>,
         srs: &'a SRS<GroupAffine<Fp>>,
         polynomials: (Vec<CircuitVar<GroupAffine<Fp>>>, Vec<()>),
     }
@@ -2328,7 +2328,7 @@ fn expand_proof(params: ExpandProofParams) -> anyhow::Result<ExpandedProof> {
             .map(|v| to_field(to_bytes(*v)))
             .collect::<Vec<_>>();
 
-        let r = to_field(to_bytes(r.0));
+        let r = to_field(to_bytes(r.inner()));
         // let zeta = to_field(plonk0.zeta_bytes);
         let challenge_poly = challenge_polynomial(&chals);
         let b = challenge_poly(zeta) + (r * challenge_poly(zetaw));
@@ -2435,9 +2435,9 @@ fn expand_proof(params: ExpandProofParams) -> anyhow::Result<ExpandedProof> {
         public: &public,
         minimal: &tock_plonk_minimal,
         ft_eval1: proof.ft_eval1,
-        r: to_field(to_bytes(r.0)),
+        r: to_field(to_bytes(r.inner())),
         old_bulletproof_challenges: &prev_challenges,
-        xi: to_field(to_bytes(xi.0)),
+        xi: to_field(to_bytes(xi.inner())),
         zetaw,
     });
 
@@ -2460,7 +2460,7 @@ fn expand_proof(params: ExpandProofParams) -> anyhow::Result<ExpandedProof> {
             },
             combined_inner_product: shift(combined_inner_product),
             b: shift(b),
-            xi: to_bytes(xi.0),
+            xi: to_bytes(xi.inner()),
             bulletproof_challenges: new_bulletproof_challenges,
         },
         should_finalize: must_verify.value().as_bool(),

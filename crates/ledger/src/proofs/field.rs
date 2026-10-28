@@ -47,7 +47,7 @@ where
             BaseField = Self,
             ScalarField = <Self as proofs::field::FieldWitness>::Scalar,
         > + Into<GroupAffine<Self>>
-        + KimchiCurve
+        + KimchiCurve<{ crate::proofs::FULL_ROUNDS }>
         + std::fmt::Debug;
     type Projective: CurveGroup<
             Affine = Self::Affine,
@@ -62,6 +62,7 @@ where
         + std::fmt::Debug;
     type Shifting: plonk_checks::ShiftingValue<Self> + Clone + std::fmt::Debug;
     type OtherCurve: KimchiCurve<
+        { crate::proofs::FULL_ROUNDS },
         ScalarField = Self,
         BaseField = <Self as proofs::field::FieldWitness>::Scalar,
     >;
@@ -70,6 +71,7 @@ where
             <Self as proofs::field::FieldWitness>::Scalar,
             Self::OtherCurve,
             Self,
+            { crate::proofs::FULL_ROUNDS },
         >;
 
     const PARAMS: Params<Self>;
@@ -90,7 +92,7 @@ impl FieldWitness for Fp {
     type Projective = ProjectivePallas;
     type Shifting = ShiftedValue<Fp>;
     type OtherCurve = GroupAffine<Fq>;
-    type FqSponge = DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>;
+    type FqSponge = DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi, { crate::proofs::FULL_ROUNDS }>;
 
     /// <https://github.com/openmina/mina/blob/46b6403cb7f158b66a60fc472da2db043ace2910/src/lib/crypto/kimchi_backend/pasta/basic/kimchi_pasta_basic.ml#L107>
     const PARAMS: Params<Self> = Params::<Self> {
@@ -109,7 +111,7 @@ impl FieldWitness for Fq {
     type Projective = ProjectiveVesta;
     type Shifting = ShiftedValue<Fq>;
     type OtherCurve = GroupAffine<Fp>;
-    type FqSponge = DefaultFqSponge<PallasParameters, PlonkSpongeConstantsKimchi>;
+    type FqSponge = DefaultFqSponge<PallasParameters, PlonkSpongeConstantsKimchi, { crate::proofs::FULL_ROUNDS }>;
 
     /// <https://github.com/openmina/mina/blob/46b6403cb7f158b66a60fc472da2db043ace2910/src/lib/crypto/kimchi_backend/pasta/basic/kimchi_pasta_basic.ml#L95>
     const PARAMS: Params<Self> = Params::<Self> {

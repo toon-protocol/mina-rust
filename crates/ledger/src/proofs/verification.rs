@@ -505,12 +505,12 @@ fn verify_with(
     use poly_commitment::ipa::OpeningProof;
 
     type SpongeParams = mina_poseidon::constants::PlonkSpongeConstantsKimchi;
-    type EFqSponge = DefaultFqSponge<PallasParameters, SpongeParams>;
-    type EFrSponge = DefaultFrSponge<Fq, SpongeParams>;
+    type EFqSponge = DefaultFqSponge<PallasParameters, SpongeParams, { crate::proofs::FULL_ROUNDS }>;
+    type EFrSponge = DefaultFrSponge<Fq, SpongeParams, { crate::proofs::FULL_ROUNDS }>;
 
     let group_map = GroupMap::<Fp>::setup();
 
-    kimchi::verifier::verify::<Pallas, EFqSponge, EFrSponge, OpeningProof<Pallas>>(
+    kimchi::verifier::verify::<{ crate::proofs::FULL_ROUNDS }, Pallas, EFqSponge, EFrSponge, OpeningProof<Pallas, { crate::proofs::FULL_ROUNDS }>>(
         &group_map,
         verifier_index,
         proof,
@@ -530,8 +530,8 @@ fn batch_verify(proofs: &[VerificationContext]) -> Result<(), VerifyError> {
     use poly_commitment::ipa::OpeningProof;
 
     type SpongeParams = mina_poseidon::constants::PlonkSpongeConstantsKimchi;
-    type EFqSponge = DefaultFqSponge<PallasParameters, SpongeParams>;
-    type EFrSponge = DefaultFrSponge<Fq, SpongeParams>;
+    type EFqSponge = DefaultFqSponge<PallasParameters, SpongeParams, { crate::proofs::FULL_ROUNDS }>;
+    type EFrSponge = DefaultFrSponge<Fq, SpongeParams, { crate::proofs::FULL_ROUNDS }>;
 
     let group_map = GroupMap::<Fp>::setup();
     let proofs = proofs
@@ -543,7 +543,7 @@ fn batch_verify(proofs: &[VerificationContext]) -> Result<(), VerifyError> {
         })
         .collect_vec();
 
-    kimchi::verifier::batch_verify::<Pallas, EFqSponge, EFrSponge, OpeningProof<Pallas>>(
+    kimchi::verifier::batch_verify::<{ crate::proofs::FULL_ROUNDS }, Pallas, EFqSponge, EFrSponge, OpeningProof<Pallas, { crate::proofs::FULL_ROUNDS }>>(
         &group_map, &proofs,
     )
 }
@@ -827,6 +827,42 @@ pub fn verify_zkapp(
     ok
 }
 
+/// toon-protocol/connector#1512: verify a side-loaded proof of any o1js
+/// `ZkProgram` against its public input fields (public input, then public
+/// output). The same steps as `verify_zkapp`, without its `ZkappStatement`,
+/// its logging or its failure dump to disk.
+pub fn verify_sideloaded(
+    verification_key: &VerificationKey,
+    public_input: &[Fp],
+    sideloaded_proof: &PicklesProofProofsVerified2ReprStableV2,
+    srs: &SRS<Vesta>,
+) -> bool {
+    let verifier_index = make_zkapp_verifier_index(verification_key);
+    verify_sideloaded_with_index(verification_key, &verifier_index, public_input, sideloaded_proof, srs)
+}
+
+/// As `verify_sideloaded`, with the verifier index built once by the caller
+/// (`make_zkapp_verifier_index`) and reused across proofs under one key.
+pub fn verify_sideloaded_with_index(
+    verification_key: &VerificationKey,
+    verifier_index: &VerifierIndex<Fq>,
+    public_input: &[Fp],
+    sideloaded_proof: &PicklesProofProofsVerified2ReprStableV2,
+    srs: &SRS<Vesta>,
+) -> bool {
+    let vk = VK {
+        commitments: *verification_key.wrap_index.clone(),
+        index: verifier_index,
+        data: (),
+    };
+    let accum_check = accumulator_check::accumulator_check(srs, &[sideloaded_proof]).unwrap_or(false);
+    let verified = verify_impl(&public_input.to_vec(), sideloaded_proof, &vk);
+    if std::env::var("TOON_1512_DEBUG").is_ok() {
+        eprintln!("debug: accum_check={accum_check} verify_impl={verified:?} wrap_domain={} public={}", verifier_index.domain.log_size_of_group, verifier_index.public);
+    }
+    accum_check && verified.unwrap_or(false)
+}
+
 fn verify_impl<AppState>(
     app_state: &AppState,
     proof: &PicklesProofProofsVerified2ReprStableV2,
@@ -837,6 +873,9 @@ where
 {
     let deferred_values = compute_deferred_values(proof)?;
     let checks = run_checks(proof, vk.index);
+    if std::env::var("TOON_1512_DEBUG").is_ok() {
+        eprintln!("debug: run_checks={checks}");
+    }
 
     let message_for_next_step_proof = get_message_for_next_step_proof(
         &proof.statement.messages_for_next_step_proof,
